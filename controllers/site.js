@@ -2,7 +2,7 @@
  * @Author: Administrator
  * @Date:   2018-03-06 22:51:26
  * @Last Modified by:   Administrator
- * @Last Modified time: 2018-03-06 22:51:42
+ * @Last Modified time: 2018-03-08 11:57:32
  */
 const bluebird = require('bluebird');
 const connectionModel = require('../models/connection');
@@ -19,7 +19,8 @@ exports.index = async function(ctx, next) {
     ctx.render('index', {
         posts,
         comments,
-        from: ctx.query.from || ''
+        from: ctx.query.from || '',
+        avatarId: ctx.query.avatarId || ''
     });
     connection.end();
 };
