@@ -2,10 +2,48 @@
  * @Author: Administrator
  * @Date:   2018-03-06 22:51:26
  * @Last Modified by:   Administrator
- * @Last Modified time: 2018-03-08 11:57:32
+ * @Last Modified time: 2018-03-08 22:58:13
  */
 const bluebird = require('bluebird');
 const connectionModel = require('../models/connection');
+
+//防御Html内容节点攻击有2种方法，一是在写入数据库前将Html标签进行转义；
+//二是在输出前进行转义；这里采用二!!!
+//定义一个函数，转义HTML标签
+// var escapeHtml = function(str) {
+//     if (!str) return '';
+//     str = str.replace(/</g, '&lt;'); //替换为Html实体
+//     str = str.replace(/>/g, '&gt;');
+//     return str;
+// };
+
+//转义html属性，转义", '
+// var escapeHtmlProperty = function(str) {
+//     if (!str) return '';
+//     str = str.replace(/"/g, '&quto;');
+//     str = str.replace(/'/g, '&#39;');
+//     str = str.replace(/ /g, '&#32;');
+//     return str;
+// };
+
+//合并转义内容和属性的函数
+var escapeHtml = function(str) {
+    if (!str) return '';
+    str = str.replace(/&/g, '&amp;'); //放到最前面
+    str = str.replace(/</g, '&lt;');
+    str = str.replace(/>/g, '&gt;');
+    str = str.replace(/"/g, '&quto;');
+    str = str.replace(/'/g, '&#39;');
+    // str = str.replace(/ /g, '&#32;'); //合并之后对空格不做转义，但是属性要带引号
+    return str;
+};
+
+//转义js
+var escapeForJs = function(str) {
+    if (!str) return '';
+    str = str.replace(/"/g, '\\"');
+    return str;
+}
 
 exports.index = async function(ctx, next) {
     const connection = connectionModel.getConnection();
@@ -19,8 +57,10 @@ exports.index = async function(ctx, next) {
     ctx.render('index', {
         posts,
         comments,
-        from: ctx.query.from || '',
-        avatarId: ctx.query.avatarId || ''
+        //在会出现html内容的地方调用对应的处理函数
+        from: escapeHtml(ctx.query.from) || '',
+        fromForJs: escapeForJs(ctx.query.from),
+        avatarId: escapeHtml(ctx.query.avatarId) || ''
     });
     connection.end();
 };
@@ -43,7 +83,9 @@ exports.post = async function(ctx, next) {
         if (post) {
             ctx.render('post', {
                 post,
-                comments
+                comments,
+                from: escapeHtml(ctx.query.from) || '',
+                avatarId: ctx.query.avatarId || ''
             });
         } else {
             ctx.status = 404;
