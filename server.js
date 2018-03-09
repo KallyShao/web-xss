@@ -2,10 +2,13 @@
  * @Author: Administrator
  * @Date:   2018-03-06 22:39:49
  * @Last Modified by:   Administrator
- * @Last Modified time: 2018-03-07 16:13:30
+ * @Last Modified time: 2018-03-09 11:31:01
  */
 const Koa = require('koa');
 const app = new Koa();
+
+// var mime = require('mime');
+// mime.extension('application/x-javascript');
 
 const koaStatic = require('koa-static');
 app.use(koaStatic('./static', {

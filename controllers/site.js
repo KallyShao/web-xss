@@ -2,7 +2,7 @@
  * @Author: Administrator
  * @Date:   2018-03-06 22:51:26
  * @Last Modified by:   Administrator
- * @Last Modified time: 2018-03-08 22:58:13
+ * @Last Modified time: 2018-03-09 13:45:18
  */
 const bluebird = require('bluebird');
 const connectionModel = require('../models/connection');
@@ -39,11 +39,12 @@ var escapeHtml = function(str) {
 };
 
 //转义js
-var escapeForJs = function(str) {
-    if (!str) return '';
-    str = str.replace(/"/g, '\\"');
-    return str;
-}
+// var escapeForJs = function(str) {
+//     if (!str) return '';
+//     str = str.replace(/\\/g, '\\\\');
+//     str = str.replace(/"/g, '\\"');
+//     return str;
+// }
 
 exports.index = async function(ctx, next) {
     const connection = connectionModel.getConnection();
@@ -59,11 +60,73 @@ exports.index = async function(ctx, next) {
         comments,
         //在会出现html内容的地方调用对应的处理函数
         from: escapeHtml(ctx.query.from) || '',
-        fromForJs: escapeForJs(ctx.query.from),
+        fromForJs: JSON.stringify(ctx.query.from),
         avatarId: escapeHtml(ctx.query.avatarId) || ''
     });
     connection.end();
 };
+
+//在富文本输出前做过滤,即黑名单方案，但是不彻底
+// var xssFilter = function(html) {
+//     if (!html) return '';
+//     html = html.replace(/<\s*\/?script\s*>/g, ''); //过滤script标签
+//     html = html.replace(/javascript:[^'"']*/g, ''); //过滤
+//     return html;
+// }
+
+//使用白名单保留部分标签和属性
+// var xssFilter = function(html) {
+//     if (!html) return '';
+//     var cheerio = require('cheerio'); //使用cheerio是为了将Html解析成dom树，这是由白名单的实现原理决定的
+//     var $ = cheerio.load(html);
+
+//     //白名单
+//     var whiteList = {
+//         'img': ['src'],
+//         'font': ['color', 'size'],
+//         'a': ['href']
+//     };
+
+//     $('*').each(function(index, elem) {
+//         // console.log('this is elem:' + elem);
+//         //过滤白名单中不存在的元素
+//         if (!whiteList[elem.name]) {
+//             $(elem).remove();
+//             //这里可以选择是否保存script标签内部的内容
+//             return;
+//         }
+//         //过滤白名单中不存在的属性
+//         for (var attr in elem.attribs) {
+//             if (whiteList[elem.name].indexOf(attr) === -1) {
+//                 $(elem).attr(attr, null);
+//             }
+//         }
+//     });
+//     return $.html();
+// }
+
+//使用第三方插件js-xss
+
+// var xssFilter = function(html) {
+//     // var html = filterXSS('<script>alert("xss");</scr' + 'ipt>');
+//     // console.log(html);
+
+//     if (!html) return '';
+//     var xss = require('xss');
+//     var ret = xss(html, {
+//         whiteList: {
+//             img: ['src'],
+//             a: ['href'],
+//             font: ['size', 'color']
+//         },
+//         onIgnoreTag: function() {
+//             // .....具体的可查看文档
+//         }
+//     });
+
+//     return ret;
+// };
+
 
 exports.post = async function(ctx, next) {
     try {
@@ -80,12 +143,16 @@ exports.post = async function(ctx, next) {
         const comments = await query(
             `select comment.*,user.username from comment left join user on comment.userId = user.id where postId = "${post.id}" order by comment.createdAt desc`
         );
+        comments.forEach(function(comment) {
+            // comment.content = xssFilter(comment.content);
+            comment.content = comment.content;
+        });
         if (post) {
             ctx.render('post', {
                 post,
                 comments,
-                from: escapeHtml(ctx.query.from) || '',
-                avatarId: ctx.query.avatarId || ''
+                // from: escapeHtml(ctx.query.from) || '',
+                // avatarId: ctx.query.avatarId || ''
             });
         } else {
             ctx.status = 404;

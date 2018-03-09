@@ -2,7 +2,7 @@
  * @Author: Administrator
  * @Date:   2018-03-07 14:05:18
  * @Last Modified by:   Administrator
- * @Last Modified time: 2018-03-07 14:05:29
+ * @Last Modified time: 2018-03-09 16:40:48
  */
 var formSerialize = require('form-serialize');
 var axios = require('axios');
@@ -18,7 +18,7 @@ $form.addEventListener('submit', (e) => {
 
 	axios.post('/user/login', data).then((data) => {
 		if (data.status === 200 && data.data.status === 0) {
-			location.href = '/';
+			// location.href = '/';
 			console.log('登录成功');
 		} else {
 			modal.show({

@@ -2,7 +2,7 @@
  * @Author: Administrator
  * @Date:   2018-03-06 22:51:53
  * @Last Modified by:   Administrator
- * @Last Modified time: 2018-03-06 22:52:04
+ * @Last Modified time: 2018-03-09 16:51:39
  */
 const bluebird = require('bluebird');
 const connectionModel = require('../models/connection');
@@ -27,7 +27,8 @@ exports.doLogin = async function(ctx, next) {
 
             // 登录成功，设置cookie
             ctx.cookies.set('userId', user.id, {
-                httpOnly: false
+                httpOnly: false,
+                // sameSite: 'strict'
             });
 
             ctx.body = {
